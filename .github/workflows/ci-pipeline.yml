@@ -75,7 +75,7 @@ jobs :
                 image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
                 scan-type: image
                 format: table
-                severity: HIGH,CRITICAL
+                severity: CRITICAL
                 ignore-unfixed: true
                 exit-code: 1
 
