@@ -60,9 +60,11 @@ jobs :
             - name: Build Docker image
               run: |
                    docker build \
-                   -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
-                   -f ${{ matrix.file }} \
-                     ${{ matrix.context }}
+                   -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} 
+                     -f ${{ matrix.file }} \
+                        ${{ matrix.context }}
+                        
+                 
 
       # -------- Trivy Scan --------
             - name: Trivy scan image
