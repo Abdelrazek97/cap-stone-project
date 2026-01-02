@@ -75,19 +75,19 @@ jobs:
           -f ${{ matrix.file }} \
           ${{ matrix.context }}
 
-      - name: Trivy Scan (Image)
+      - name: Trivy Scan (Image) - Table
         uses: aquasecurity/trivy-action@0.33.1
         with:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-          format: json
-          output: trivy-${{ matrix.image }}.json
+          format: table
+          output: trivy-${{ matrix.image }}.txt
           severity: CRITICAL
           exit-code: 0
 
       - uses: actions/upload-artifact@v4
         with:
-          name: trivy-report-${{ matrix.image }}
-          path: trivy-${{ matrix.image }}.json
+            name: trivy-report-${{ matrix.image }}
+            path: trivy-${{ matrix.image }}.txt
 
       - name: Push image
         run: |
