@@ -1,133 +1,116 @@
-name : ci pipeline
-on : 
-    push :
+name: ci-pipeline
 
-        branches : 
-            - testing
-           
-    pull_request :
-        branches : 
-            - testing
+on:
+  push:
+    branches: [ testing ]
+  pull_request:
+    branches: [ testing ]
 
-jobs :
-    codelevel :
-        runs-on : ubuntu-latest
-        steps :
-            - name : Checkout code
-              uses : actions/checkout@v4
-                # sonar-qube scan 
-            - name: SonarCloud Scan
-              uses: SonarSource/sonarcloud-github-action@v2
-              env:
-                 SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              with:
-                 args: >
-                      -Dsonar.projectKey=ksami13200_cap-stone-project2
-                      -Dsonar.organization=ksami13200
-                      -Dsonar.sources=.
+jobs:
+# ---------- Code Quality ----------
+  codelevel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Generate Sonar Report
-              run: |
-                  mkdir -p reports/sonar
-                      echo "# SonarCloud Code Quality Report" > reports/sonar/sonar-report.md
-                      echo "" >> reports/sonar/sonar-report.md
-                      echo "- Project: ksami13200_cap-stone-project2" >> reports/sonar/sonar-report.md
-                      echo "- Branch: testing" >> reports/sonar/sonar-report.md
-                      echo "- Scan Date: $(date)" >> reports/sonar/sonar-report.md
-                      echo "" >> reports/sonar/sonar-report.md
-                      echo "🔗 Full report:" >> reports/sonar/sonar-report.md
-                      echo "https://sonarcloud.io/project/overview?id=ksami13200_cap-stone-project2" >> reports/sonar/sonar-report.md
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=ksami13200_cap-stone-project2
+            -Dsonar.organization=ksami13200
+            -Dsonar.sources=.
 
-            - name: Upload Sonar Report
-              uses: actions/upload-artifact@v4
-              with:
-                  name: sonar-report
-                  path: reports/sonar/
+      - name: Fetch Sonar Metrics
+        run: |
+          mkdir -p reports/sonar
+          curl -s -u ${{ secrets.SONAR_TOKEN }}: \
+          "https://sonarcloud.io/api/measures/component?component=ksami13200_cap-stone-project2&metricKeys=bugs,vulnerabilities,code_smells,coverage" \
+          -o reports/sonar/metrics.json
 
+      - name: Generate Sonar Report
+        run: |
+          echo "# Sonar Metrics" > reports/sonar/report.md
+          echo "| Metric | Value |" >> reports/sonar/report.md
+          echo "|------|-------|" >> reports/sonar/report.md
+          jq -r '.component.measures[] | "| \(.metric) | \(.value) |"' reports/sonar/metrics.json >> reports/sonar/report.md
 
-    docker-build-and-push :
-        runs-on : ubuntu-latest
-        needs : codelevel
-        strategy:
-            matrix:
-              include:
-                - service: backend
-                  context: .
-                  file: ./Dockerfile
-                  image: ourplant-backend
-                - service: frontend
-                  context: .
-                  file: ./nginx/Dockerfile
-                  image: ourplant-frontend
-                - service: database
-                  context: ./db
-                  file: ./db/Dockerfile
-                  image: ourplant-db
-        steps :
-            - name : Checkout code
-              uses : actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sonar-report
+          path: reports/sonar/
 
-            - name : login to dockerhub
-              uses: docker/login-action@v3
-              with:
-                username: ${{ secrets.DOCKERHUB_USERNAME }}
-                password: ${{ secrets.DOCKERHUB_TOKEN }}
+# ---------- Build / Scan / Push ----------
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: codelevel
+    strategy:
+      matrix:
+        include:
+          - image: ourplant-backend
+            context: .
+            file: ./Dockerfile
+          - image: ourplant-frontend
+            context: .
+            file: ./nginx/Dockerfile
+          - image: ourplant-db
+            context: ./db
+            file: ./db/Dockerfile
 
-      # -------- Docker Build --------
-             # -------- Build Image --------
-            - name: Build Docker image
-              run: |
-                  docker build \
-                  -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
-                  -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest \
-                  -f ${{ matrix.file }} \
-                  ${{ matrix.context }}
+    steps:
+      - uses: actions/checkout@v4
 
-                        
-                 
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # -------- Trivy Scan --------
-            - name: Trivy scan image
-              uses: aquasecurity/trivy-action@0.33.1
-              with:
-                image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
-                scan-type: image
-                format: table
-                severity: CRITICAL
-                ignore-unfixed: true
-                exit-code: 0
+      - name: Build image
+        run: |
+          docker build \
+          -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }} \
+          -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest \
+          -f ${{ matrix.file }} \
+          ${{ matrix.context }}
 
-      # -------- Push Image --------
-            - name: Push Docker image (SHA tag)
-              run: |
-                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+      - name: Trivy Scan (Image)
+        uses: aquasecurity/trivy-action@0.33.1
+        with:
+          image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+          format: json
+          output: trivy-${{ matrix.image }}.json
+          severity: CRITICAL,HIGH
+          exit-code: 1
 
-            - name: Push Docker image (latest tag)
-              run: |
-                    docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report-${{ matrix.image }}
+          path: trivy-${{ matrix.image }}.json
 
+      - name: Push image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:latest
 
-    # ------------update helm charts-----------
-    update-helm-chart:
-        runs-on: ubuntu-latest
-        needs: docker-build-and-push
-        permissions:
-            contents: write
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@v4
+# ---------- Helm Update ----------
+  update-helm:
+    runs-on: ubuntu-latest
+    needs: docker-build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Update Helm values with image tags
-              run: |
-                IMAGE_TAG=${GITHUB_SHA}
+      - name: Update Helm tag
+        run: |
+          sed -i "s|tag:.*|tag: ${GITHUB_SHA}|g" helm/ourplant/values.yaml
 
-                sed -i "s|tag:.*|tag: ${IMAGE_TAG}|g" helm/ourplant/values.yaml
-
-            - name: Commit & push Helm changes
-              run: |
-                git config user.name "github-actions"
-                git config user.email "github-actions@github.com"
-
-                git add helm/ourplant/values.yaml
-                git commit -m "ci: update images to ${GITHUB_SHA}"
-                git push
+      - name: Commit & Push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add helm/ourplant/values.yaml
+          git commit -m "ci: update image tag to ${GITHUB_SHA}"
+          git push
