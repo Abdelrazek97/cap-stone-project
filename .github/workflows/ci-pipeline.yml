@@ -26,6 +26,24 @@ jobs :
                       -Dsonar.organization=abdelrazek97
                       -Dsonar.sources=.
 
+            - name: Generate Sonar Report
+              run: |
+                  mkdir -p reports/sonar
+                      echo "# SonarCloud Code Quality Report" > reports/sonar/sonar-report.md
+                      echo "" >> reports/sonar/sonar-report.md
+                      echo "- Project: ksami13200_cap-stone-project2" >> reports/sonar/sonar-report.md
+                      echo "- Branch: testing" >> reports/sonar/sonar-report.md
+                      echo "- Scan Date: $(date)" >> reports/sonar/sonar-report.md
+                      echo "" >> reports/sonar/sonar-report.md
+                      echo "🔗 Full report:" >> reports/sonar/sonar-report.md
+                      echo "https://sonarcloud.io/project/overview?id=ksami13200_cap-stone-project2" >> reports/sonar/sonar-report.md
+
+            - name: Upload Sonar Report
+              uses: actions/upload-artifact@v4
+              with:
+                  name: sonar-report
+                  path: reports/sonar/
+
 
     docker-build-and-push :
         runs-on : ubuntu-latest
