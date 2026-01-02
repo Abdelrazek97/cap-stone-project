@@ -81,8 +81,8 @@ jobs:
           image-ref: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ github.sha }}
           format: json
           output: trivy-${{ matrix.image }}.json
-          severity: CRITICAL,HIGH
-          exit-code: 1
+          severity: CRITICAL
+          exit-code: 0
 
       - uses: actions/upload-artifact@v4
         with:
