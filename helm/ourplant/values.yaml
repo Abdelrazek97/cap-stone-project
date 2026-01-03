@@ -4,7 +4,7 @@ global:
 frontend:
   image:
     repository: abdlerazek/ourplant-frontend
-    tag: 7930ee7da009bf777054a8006da301851d4215c2
+    tag: eac142129a118d644288a465d48dedcb9a9de5fa
     pullPolicy: IfNotPresent
 
   service:
@@ -16,7 +16,7 @@ frontend:
 backend:
   image:
     repository: abdlerazek/ourplant-backend
-    tag: 7930ee7da009bf777054a8006da301851d4215c2
+    tag: eac142129a118d644288a465d48dedcb9a9de5fa
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
@@ -31,7 +31,7 @@ backend:
 mysql:
   image:
     repository: abdlerazek/ourplant-db
-    tag: 7930ee7da009bf777054a8006da301851d4215c2
+    tag: eac142129a118d644288a465d48dedcb9a9de5fa
     pullPolicy: IfNotPresent
   service:
     type: ClusterIP
