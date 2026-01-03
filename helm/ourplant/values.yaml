@@ -4,8 +4,8 @@ global:
 frontend:
   image:
     repository: abdlerazek/ourplant-frontend
-    tag: latest
     pullPolicy: IfNotPresent
+    tag: latest
 
   service:
     type: NodePort
