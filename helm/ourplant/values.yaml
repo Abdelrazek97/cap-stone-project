@@ -5,7 +5,7 @@ frontend:
   image:
     repository: abdlerazek/ourplant-frontend
     pullPolicy: Always
-    tag: latest
+    tag: a77915dedb9c714e7926860ef64d00ce3225964b
 
 
   service:
@@ -17,7 +17,7 @@ frontend:
 backend:
   image:
     repository: abdlerazek/ourplant-backend
-    tag: latest
+    tag: a77915dedb9c714e7926860ef64d00ce3225964b
     pullPolicy: Always
 
 
@@ -35,7 +35,7 @@ backend:
 mysql:
   image:
     repository: abdlerazek/ourplant-db
-    tag: latest
+    tag: a77915dedb9c714e7926860ef64d00ce3225964b
     pullPolicy: Always
 
   service:
