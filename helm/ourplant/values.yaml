@@ -4,7 +4,7 @@ global:
 frontend:
   image:
     repository: abdlerazek/ourplant-frontend
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
     tag: latest
 
   service:
@@ -17,7 +17,7 @@ backend:
   image:
     repository: abdlerazek/ourplant-backend
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   service:
     type: ClusterIP
     port: 5000
@@ -32,7 +32,7 @@ mysql:
   image:
     repository: abdlerazek/ourplant-db
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   service:
     type: ClusterIP
     port: 3306
