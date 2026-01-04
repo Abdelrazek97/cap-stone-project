@@ -11,7 +11,7 @@ frontend:
     type: NodePort
     port: 80
     nodePort: 30080
-  replicaCount: 1
+  replicaCount: 2
 
 backend:
   image:
@@ -21,7 +21,7 @@ backend:
   service:
     type: ClusterIP
     port: 5000
-  replicaCount: 1
+  replicaCount: 2
   env:
     mysqlHost: db
     mysqlUser: root
