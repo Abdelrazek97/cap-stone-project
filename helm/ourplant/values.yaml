@@ -5,7 +5,7 @@ frontend:
   image:
     repository: abdlerazek/ourplant-frontend
     pullPolicy: Always
-    tag: fa45f4f081567261bd7e4b413e18a3ce8487d288
+    tag: ab73a9cafe25f60df04d359712a4e3c37a411cd1
 
   service:
     type: NodePort
@@ -16,7 +16,7 @@ frontend:
 backend:
   image:
     repository: abdlerazek/ourplant-backend
-    tag: fa45f4f081567261bd7e4b413e18a3ce8487d288
+    tag: ab73a9cafe25f60df04d359712a4e3c37a411cd1
     pullPolicy: Always
   service:
     type: ClusterIP
@@ -31,7 +31,7 @@ backend:
 mysql:
   image:
     repository: abdlerazek/ourplant-db
-    tag: fa45f4f081567261bd7e4b413e18a3ce8487d288
+    tag: ab73a9cafe25f60df04d359712a4e3c37a411cd1
     pullPolicy: Always
   service:
     type: ClusterIP
